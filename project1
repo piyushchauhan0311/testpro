@@ -1,0 +1,88 @@
+
+import numpy as np
+
+import pandas as pd
+
+
+
+df=pd.read_excel('dummy.xlsx')
+
+
+
+from datetime import date
+
+today = date.today()
+
+
+
+to=list(df[df['Date']<today]['Email'])
+
+to1=list(df[df['Date']<today]['S No.'])
+
+
+to
+
+
+for i in range(len(to)):
+    import win32com.client as win32
+    outlook = win32.Dispatch('outlook.application')
+    mail = outlook.CreateItem(0)
+    mail.To = to[i]
+    mail.Subject = 'Test Mail'
+    
+    a = "We have not recieved our machine no. ="+to1[i]
+    mail.Body = a
+    #mail.HTMLBody = '<h2>HTML Message body</h2>' #this field is optional
+
+# To attach a file to the email (optional):
+#attachment  = "Path to the attachment"
+#mail.Attachments.Add(attachment)
+
+    mail.Send()
+    
+    
+import openpyxl
+from win32com.client import Dispatch
+outlook = Dispatch("Outlook.Application").GetNamespace("MAPI")
+inbox = outlook.GetDefaultFolder("6")
+all_inbox = inbox.Items
+folders = inbox.Folders
+to2=df.columns.get_loc('Email')
+to3=df.columns.get_loc('Comments')
+
+for k in range(len(to)):
+    for msg in all_inbox:
+           if(msg.Class==43):
+                if(msg.SenderEmailType=='EX'):
+                    se=msg.Sender.GetExchangeUser().PrimarySmtpAddress
+                    if(se==to[k]):
+                        print(se)
+                        print(msg.Subject)
+                        head,sep,tail=msg.body.partition('From:')
+                        text = "\n".join([ll.rstrip() for ll in head.splitlines() if ll.strip()])
+                        print(text)
+                        #print(msg.body)
+                        wbkName = 'dummy.xlsx'
+
+                        wbk = openpyxl.load_workbook(wbkName)
+
+                        for wks in wbk.worksheets:
+
+                            for myRow in range(1, 100):
+
+                                if(wks.cell(row=myRow, column=to2+1).value == to[k]):
+
+                                    wks.cell(row=myRow, column=to3+1).value = text
+
+                                    wbk.save(wbkName)
+
+wbk.close
+                    #print(se)
+                      #      print(msg.Sender.GetExchangeUser().PrimarySmtpAddressfor)
+
+                    
+               #else:
+                #   se=msg.SenderEmailAddress
+                
+                
+                
